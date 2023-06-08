@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Audio File Upload with Matrix Rain Animation</title>
+    <!-- Your existing CSS and additional CSS for new elements -->
+    <style>
+        /* Your existing CSS here... */
+        body {
+            background: #313131;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            perspective: 500px;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            color: #fff;
+        }
+
+        .upload-container {
+            border: 1px solid #00ff00;
+            padding: 20px;
+            border-radius: 5px;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.6);
+            transform: rotateX(20deg) rotateY(20deg);
+            transform-style: preserve-3d;
+            transition: transform 1s;
+        }
+
+        .upload-container:hover {
+            transform: rotateX(0deg) rotateY(0deg);
+        }
+
+        #upload-btn {
+            margin-top: 10px;
+            background-color: #00ff00;
+            color: #000;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #upload-btn:hover {
+            background-color: #00cc00;
+        }
+
+        #result {
+            margin-top: 20px;
+            font-size: 20px;
+        }
+
+        /* MATRIX RAIN ANIMATION */
+        canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        /* Additional CSS */
+        #record, #stop {
+            margin-top: 10px;
+            background-color: #00ff00;
+            color: #000;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: none;
+        }
+
+        #record.active, #stop.active {
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+<div class="upload-container">
+    <h2>Voice Radar</h2>
+    <input type="file" id="audio-file-input" accept="audio/*">
+    <button id="upload-btn">Upload</button>
+    <!-- Added new buttons for recording -->
+    <button id="record" class="active">Start Recording</button>
+    <button id="stop">Stop Recording</button>
+    <div id="result"></div>
+</div>
+
+<!-- Your existing HTML and JS here... -->
+<canvas></canvas>
+<script>
+    /* Your existing JavaScript here... */
+    // MATRIX RAIN ANIMATION
+    var canvas = document.querySelector('canvas'),
+        ctx = canvas.getContext('2d');
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    var letters = 'ABCDEFGHIJKLMNOPQRSTUVXYZABCDEFGHIJKLMNOPQRSTUVXYZABCDEFGHIJKLMNOPQRSTUVXYZABCDEFGHIJKLMNOPQRSTUVXYZABCDEFGHIJKLMNOPQRSTUVXYZABCDEFGHIJKLMNOPQRSTUVXYZ';
+    letters = letters.split('');
+
+    var fontSize = 10,
+        columns = canvas.width / fontSize;
+
+    var drops = [];
+    for (var i = 0; i < columns; i++) {
+        drops[i] = 1;
+    }
+
+    function drawMatrixRain() {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = '#0f0';
+        ctx.font = fontSize + 'px monospace';
+        for (var i = 0; i < drops.length; i++) {
+            var text = letters[Math.floor(Math.random() * letters.length)];
+            ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+            drops[i]++;
+
+            if (drops[i] * fontSize > canvas.height && Math.random() > 0.95) {
+                drops[i] = 0;
+            }
+        }
+    }
+
+    setInterval(drawMatrixRain, 33);
+
+    // FILE UPLOAD
+    document.getElementById('upload-btn').addEventListener('click', function () {
+        var fileInput = document.getElementById('audio-file-input');
+        var formData = new FormData();
+        formData.append("audio_file", fileInput.files[0], "segment_3.wav");
+
+        var requestOptions = {
+            method: 'POST',
+            body: formData,
+            redirect: 'follow'
+        };
+
+        fetch("http://127.0.0.1:8000/detect/", requestOptions)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(result => {
+                document.getElementById('result').innerText = 'Speaker: ' + result.speaker;
+            })
+            .catch(error => {
+                console.log('Fetch error: ', error);
+            });
+    });
+
+    // Recording functionality
+    const recordButton = document.querySelector('#record');
+    const stopButton = document.querySelector('#stop');
+    const uploadButton = document.querySelector('#upload-btn');
+    const fileInput = document.querySelector('#audio-file-input');
+    let recorder;
+    let audioStream;
+
+    recordButton.addEventListener('click', async () => {
+        // Request the browser permission to use the microphone
+        audioStream = await navigator.mediaDevices.getUserMedia({audio: true});
+        recorder = new MediaRecorder(audioStream);
+
+        // Collect the audio data into chunks
+        const audioChunks = [];
+        recorder.addEventListener('dataavailable', event => {
+            audioChunks.push(event.data);
+        });
+
+        // Start recording
+        recorder.start();
+
+        // Hide the record button, show the stop button, and disable the upload button
+        recordButton.classList.remove('active');
+        stopButton.classList.add('active');
+        uploadButton.disabled = true;
+
+        recorder.addEventListener('stop', () => {
+            const audioBlob = new Blob(audioChunks, {type: 'audio/wav'});
+
+            // Create a File object from the Blob and assign it to the file input
+            const audioFile = new File([audioBlob], 'recording.wav', {type: 'audio/wav'});
+            fileInput.files = new FileListItem([audioFile]);
+        });
+    });
+
+    stopButton.addEventListener('click', () => {
+        // Stop the recording
+        recorder.stop();
+
+        // Stop the audio stream
+        audioStream.getTracks().forEach(track => track.stop());
+
+        // Hide the stop button, show the record button, and enable the upload button
+        stopButton.classList.remove('active');
+        recordButton.classList.add('active');
+        uploadButton.disabled = false;
+    });
+
+    // Polyfill for creating a FileList
+    function FileListItem(a) {
+        a = [].slice.call(Array.isArray(a) ? a : arguments);
+        for (var c, b = c = a.length, d = !0; b-- && d;) d = a[b] instanceof File;
+        if (!d) throw new TypeError("expected argument to FileList is File or array of File objects");
+        for (b = (new ClipboardEvent("")).clipboardData || new DataTransfer; c--;) b.items.add(a[c]);
+        return b.files;
+    }
+</script>
+</body>
+</html>

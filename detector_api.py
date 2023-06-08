@@ -7,10 +7,11 @@ from train_model import CustomResNet34
 from fastapi import FastAPI, File, UploadFile
 dataset = SpeakerDataset('dataset/')
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-
+from from_ogg import ogg_to_wav
+from fastapi.middleware.cors import CORSMiddleware
+from typing import Optional
 def identify_speaker(model, audio_file, dataset):
-    samples, sample_rate = librosa.load(audio_file, sr=None)
+    samples, sample_rate = librosa.load(audio_file, sr=16000)
 
     # Compute the Mel spectrogram
     mel_spectrogram = librosa.feature.melspectrogram(y=samples, sr=sample_rate, n_mels=128)
@@ -35,8 +36,7 @@ def identify_speaker(model, audio_file, dataset):
 
 
 # Test the speaker identification function with a new audio file
-# test_audio_file = 'test_data/Shukrulloh_domla_test_audio.wav'
-test_audio_file = 'test_data/Sardor_domla_test_audio.wav'
+# test_audio_file = 'test_data/Sardor_domla_test_audio.wav'
 model_path = 'speaker_identification_model.pth'
 num_classes = len(dataset.speakers)
 model = CustomResNet34(num_classes=num_classes).to(device)
@@ -46,13 +46,32 @@ model.eval()
 # print(f"Ovoz egasi: {identified_speaker}")
 
 app = FastAPI()
+origins = [
+    "http://localhost:63342",  # If your front-end is served at localhost:3000
+    "http://localhost:8000",  # If your front-end is served at localhost:8000
+    # Add any other origins you need to allow requests from
+]
 
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 @app.post("/detect/")
 async def speaker_identification(audio_file: UploadFile = File(...)):
-    with open("temp_audio.wav", "wb") as f:
-        f.write(await audio_file.read())
-    identified_speaker = identify_speaker(model, "temp_audio.wav", dataset)
+    print(audio_file.content_type)
+    if audio_file.content_type == "audio/ogg":
+        with open("temp_audio.ogg", "wb") as f:
+            f.write(await audio_file.read())
+
+        input_file = ogg_to_wav("temp_audio.ogg", "test_data")
+    else:
+        with open("temp_audio.wav", "wb") as f:
+            f.write(await audio_file.read())
+            input_file = "temp_audio.wav"
+    identified_speaker = identify_speaker(model, input_file, dataset)
     return {"speaker": identified_speaker}
 
 # uvicorn detector_api:app --reload

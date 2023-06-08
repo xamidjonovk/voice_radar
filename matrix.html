@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Audio File Upload with Matrix Rain Animation</title>
+    <style>
+        body {
+            background: #313131;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            perspective: 500px;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            color: #fff;
+        }
+
+        .upload-container {
+            border: 1px solid #00ff00;
+            padding: 20px;
+            border-radius: 5px;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.6);
+            transform: rotateX(20deg) rotateY(20deg);
+            transform-style: preserve-3d;
+            transition: transform 1s;
+        }
+
+        .upload-container:hover {
+            transform: rotateX(0deg) rotateY(0deg);
+        }
+
+        #upload-btn {
+            margin-top: 10px;
+            background-color: #00ff00;
+            color: #000;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #upload-btn:hover {
+            background-color: #00cc00;
+        }
+
+        #result {
+            margin-top: 20px;
+            font-size: 20px;
+        }
+
+        /* MATRIX RAIN ANIMATION */
+        canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+    </style>
+</head>
+<body>
+    <div class="upload-container">
+        <h2>Voice Radar</h2>
+        <input type="file" id="audio-file-input" accept="audio/*">
+        <button id="upload-btn">Upload</button>
+        <div id="result"></div>
+    </div>
+
+    <canvas></canvas>
+
+    <script>
+        // MATRIX RAIN ANIMATION
+        var canvas = document.querySelector('canvas'),
+            ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        var letters = 'ABCDEFGHIJKLMNOPQRSTUVXYZABCDEFGHIJKLMNOPQRSTUVXYZABCDEFGHIJKLMNOPQRSTUVXYZABCDEFGHIJKLMNOPQRSTUVXYZABCDEFGHIJKLMNOPQRSTUVXYZABCDEFGHIJKLMNOPQRSTUVXYZ';
+        letters = letters.split('');
+
+        var fontSize = 10,
+            columns = canvas.width / fontSize;
+
+        var drops = [];
+        for (var i = 0; i < columns; i++) {
+            drops[i] = 1;
+        }
+
+        function drawMatrixRain() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#0f0';
+            ctx.font = fontSize + 'px monospace';
+            for (var i = 0; i < drops.length; i++) {
+                var text = letters[Math.floor(Math.random() * letters.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                drops[i]++;
+
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.95) {
+                    drops[i] = 0;
+                }
+            }
+        }
+
+        setInterval(drawMatrixRain, 33);
+
+        // FILE UPLOAD
+        document.getElementById('upload-btn').addEventListener('click', function () {
+            var fileInput = document.getElementById('audio-file-input');
+            var formData = new FormData();
+            formData.append("audio_file", fileInput.files[0], "segment_3.wav");
+
+            var requestOptions = {
+                method: 'POST',
+                body: formData,
+                redirect: 'follow'
+            };
+
+            fetch("http://127.0.0.1:8000/detect/", requestOptions)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(result => {
+                    document.getElementById('result').innerText = 'Speaker: ' + result.speaker;
+                })
+                .catch(error => {
+                    console.log('Fetch error: ', error);
+                });
+        });
+    </script>
+</body>
+</html>

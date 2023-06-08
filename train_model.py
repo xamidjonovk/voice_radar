@@ -7,12 +7,14 @@ from torchvision.models.resnet import ResNet, BasicBlock
 
 
 class SpeakerDataset(Dataset):
-    def __init__(self, root_dir, transform=None):
+    def __init__(self, root_dir,T=5.0, transform=None):
         self.root_dir = root_dir
-        self.speakers = os.listdir(root_dir)
+        self.speakers = [d for d in os.listdir(root_dir) if os.path.isdir(os.path.join(root_dir, d))]  # Only include directories
         self.filepaths = []
         self.labels = []
         self.transform = transform
+        self.T = T  # Target duration in seconds
+
 
         for i, speaker in enumerate(self.speakers):
             speaker_dir = os.path.join(root_dir, speaker)
@@ -24,7 +26,7 @@ class SpeakerDataset(Dataset):
         return len(self.filepaths)
 
     def __getitem__(self, idx):
-        samples, sample_rate = librosa.load(self.filepaths[idx], sr=None)
+        samples, sample_rate = librosa.load(self.filepaths[idx], sr=16000)
 
         # Compute the Mel spectrogram
         mel_spectrogram = librosa.feature.melspectrogram(y=samples, sr=sample_rate, n_mels=128)
@@ -34,6 +36,22 @@ class SpeakerDataset(Dataset):
 
         # Normalize the Mel spectrogram to the range [0, 1]
         mel_spectrogram_db_normalized = (mel_spectrogram_db + 80) / 80
+
+        ###
+        # Calculate target number of frames
+        hop_length = 512  # Default hop length in librosa
+        N = int(self.T * sample_rate // hop_length)
+
+        # Pad or truncate to target length
+        if mel_spectrogram_db_normalized.shape[1] < N:
+            # Zero pad
+            pad_width = N - mel_spectrogram_db_normalized.shape[1]
+            mel_spectrogram_db_normalized = np.pad(mel_spectrogram_db_normalized, pad_width=((0, 0), (0, pad_width)), mode='constant')
+        else:
+            # Truncate
+            mel_spectrogram_db_normalized = mel_spectrogram_db_normalized[:, :N]
+
+        ###
 
         # Convert the NumPy array to a PyTorch tensor and add a channel dimension
         mel_spectrogram_tensor = torch.tensor(mel_spectrogram_db_normalized).unsqueeze(0)
@@ -53,10 +71,11 @@ class CustomResNet34(ResNet):
 
 def main():
     dataset = SpeakerDataset('dataset/')
-    data_loader = DataLoader(dataset, batch_size=8, shuffle=True, num_workers=0)
+    data_loader = DataLoader(dataset, batch_size=8, shuffle=True, num_workers=1)
 
     # # Initialize the model
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(device)
     num_classes = len(dataset.speakers)
     model = CustomResNet34(num_classes=num_classes).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
