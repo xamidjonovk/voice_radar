@@ -2,6 +2,7 @@ import os
 import torch
 import librosa
 import numpy as np
+from sklearn.model_selection import train_test_split
 from torch.utils.data import Dataset, DataLoader
 from torchvision.models.resnet import ResNet, BasicBlock
 
@@ -69,9 +70,61 @@ class CustomResNet34(ResNet):
         self.conv1 = torch.nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
 
 
+import os
+import torch
+import librosa
+import optuna
+import numpy as np
+from torch.utils.data import Dataset, DataLoader
+from torchvision.models.resnet import ResNet, BasicBlock
+from sklearn.model_selection import train_test_split
+
+# your SpeakerDataset and CustomResNet34 classes go here
+
+# def objective(trial):
+#     # suggested values
+#     lr = trial.suggest_float('lr', 1e-5, 1e-2)
+#     batch_size = trial.suggest_categorical('batch_size', [8, 16, 32, 64])
+#     num_layers = trial.suggest_categorical('num_layers', [1, 2, 3, 4])
+#
+#     dataset = SpeakerDataset('dataset/')
+#     data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=1)
+#
+#     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+#     num_classes = len(dataset.speakers)
+#     model = CustomResNet34(num_classes=num_classes).to(device)
+#     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+#     criterion = torch.nn.CrossEntropyLoss()
+#
+#     num_epochs = 10
+#     for epoch in range(num_epochs):
+#         for i, (inputs, labels) in enumerate(data_loader):
+#             inputs, labels = inputs.to(device), labels.to(device)
+#
+#             optimizer.zero_grad()
+#             outputs = model(inputs)
+#             loss = criterion(outputs, labels)
+#             loss.backward()
+#             optimizer.step()
+#
+#     return loss.item()  # Return the last training loss
+#
+# study = optuna.create_study(direction='minimize')
+# study.optimize(objective, n_trials=100)
+#
+# # print the best value of hyper-parameters
+# print("Best trial:")
+# trial = study.best_trial
+# print("  Value: ", trial.value)
+# print("  Params: ")
+# for key, value in trial.params.items():
+#     print("    {}: {}".format(key, value))
+
+
+
 def main():
     dataset = SpeakerDataset('dataset/')
-    data_loader = DataLoader(dataset, batch_size=8, shuffle=True, num_workers=1)
+    data_loader = DataLoader(dataset, batch_size=16, shuffle=True, num_workers=4)
 
     # # Initialize the model
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

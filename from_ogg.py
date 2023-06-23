@@ -22,8 +22,19 @@ def ogg_to_wav(input_file, output_dir, segment_duration=10*1000):
     return output_file
 
 
-name = "Komiljon_Xamidjonov"
-input_file = f"2023-05-23 11.16.34.ogg"
+def mp3_to_wav(input_file, output_dir, segment_duration=10*1000):
+    audio = AudioSegment.from_mp3(input_file)
+    start_time = 0
+    end_time = segment_duration
+    segment = audio[start_time:end_time]
+    output_file = os.path.join(output_dir, f"test_{os.path.splitext(os.path.basename(input_file))[0]}.wav")
+    segment.export(output_file, format="wav")
+    return output_file
+
+# ogg_to_wav("test_data/Baxtibek.ogg","test_data",60000)
+
+name = "Bahtibek_Anvarov"
+input_file = f"test_data/test_Baxtibek.wav"
 output_dir = f"dataset/{name}"
 os.makedirs(output_dir, exist_ok=True)
 split_audio(input_file, output_dir)

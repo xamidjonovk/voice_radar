@@ -61,79 +61,153 @@
     </style>
 </head>
 <body>
-    <div class="upload-container">
-        <h2>Voice Radar</h2>
-        <input type="file" id="audio-file-input" accept="audio/*">
-        <button id="upload-btn">Upload</button>
-        <div id="result"></div>
-    </div>
+<div class="upload-container">
+    <h2>Voice Radar</h2>
+    <input type="file" id="audio-file-input" accept="audio/*">
+    <button id="upload-btn">Upload</button>
+    <div id="result"></div>
+</div>
 
-    <canvas></canvas>
+<canvas></canvas>
 
-    <script>
-        // MATRIX RAIN ANIMATION
-        var canvas = document.querySelector('canvas'),
-            ctx = canvas.getContext('2d');
+<script>
+    // MATRIX RAIN ANIMATION
+    var canvas = document.querySelector('canvas'),
+        ctx = canvas.getContext('2d');
 
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
-        var letters = 'ABCDEFGHIJKLMNOPQRSTUVXYZABCDEFGHIJKLMNOPQRSTUVXYZABCDEFGHIJKLMNOPQRSTUVXYZABCDEFGHIJKLMNOPQRSTUVXYZABCDEFGHIJKLMNOPQRSTUVXYZABCDEFGHIJKLMNOPQRSTUVXYZ';
-        letters = letters.split('');
+    var letters = 'ABCDEFGHIJKLMNOPQRSTUVXYZABCDEFGHIJKLMNOPQRSTUVXYZABCDEFGHIJKLMNOPQRSTUVXYZABCDEFGHIJKLMNOPQRSTUVXYZABCDEFGHIJKLMNOPQRSTUVXYZABCDEFGHIJKLMNOPQRSTUVXYZ';
+    letters = letters.split('');
 
-        var fontSize = 10,
-            columns = canvas.width / fontSize;
+    var fontSize = 10,
+        columns = canvas.width / fontSize;
 
-        var drops = [];
-        for (var i = 0; i < columns; i++) {
-            drops[i] = 1;
-        }
+    var drops = [];
+    for (var i = 0; i < columns; i++) {
+        drops[i] = 1;
+    }
 
-        function drawMatrixRain() {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+    function drawMatrixRain() {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            ctx.fillStyle = '#0f0';
-            ctx.font = fontSize + 'px monospace';
-            for (var i = 0; i < drops.length; i++) {
-                var text = letters[Math.floor(Math.random() * letters.length)];
-                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-                drops[i]++;
+        ctx.fillStyle = '#0f0';
+        ctx.font = fontSize + 'px monospace';
+        for (var i = 0; i < drops.length; i++) {
+            var text = letters[Math.floor(Math.random() * letters.length)];
+            ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+            drops[i]++;
 
-                if (drops[i] * fontSize > canvas.height && Math.random() > 0.95) {
-                    drops[i] = 0;
-                }
+            if (drops[i] * fontSize > canvas.height && Math.random() > 0.95) {
+                drops[i] = 0;
             }
         }
+    }
 
-        setInterval(drawMatrixRain, 33);
+    setInterval(drawMatrixRain, 33);
 
-        // FILE UPLOAD
-        document.getElementById('upload-btn').addEventListener('click', function () {
-            var fileInput = document.getElementById('audio-file-input');
-            var formData = new FormData();
-            formData.append("audio_file", fileInput.files[0], "segment_3.wav");
+    // FILE UPLOAD
+    // document.getElementById('upload-btn').addEventListener('click', function () {
+    //     var fileInput = document.getElementById('audio-file-input');
+    //     var formData = new FormData();
+    //     formData.append("audio_file", fileInput.files[0], "segment_3.wav");
+    //
+    //     var requestOptions = {
+    //         method: 'POST',
+    //         body: formData,
+    //         redirect: 'follow'
+    //     };
+    //
+    //     fetch("http://127.0.0.1:8000/detect/", requestOptions)
+    //         .then(response => {
+    //             if (!response.ok) {
+    //                 throw new Error(`HTTP error! status: ${response.status}`);
+    //             }
+    //             return response.json();
+    //         })
+    //         .then(result => {
+    //             document.getElementById('result').innerText = 'Speaker: ' + result.speaker;
+    //         })
+    //         .catch(error => {
+    //             console.log('Fetch error: ', error);
+    //         });
+    // });
 
-            var requestOptions = {
-                method: 'POST',
-                body: formData,
-                redirect: 'follow'
-            };
+    document.getElementById('upload-btn').addEventListener('click', function () {
+        var fileInput = document.getElementById('audio-file-input');
+        var formData = new FormData();
+        formData.append("audio_file", fileInput.files[0], "segment_3.wav");
 
-            fetch("http://127.0.0.1:8000/detect/", requestOptions)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(result => {
-                    document.getElementById('result').innerText = 'Speaker: ' + result.speaker;
-                })
-                .catch(error => {
-                    console.log('Fetch error: ', error);
-                });
-        });
-    </script>
+        var requestOptions = {
+            method: 'POST',
+            body: formData,
+            redirect: 'follow'
+        };
+
+        fetch("http://127.0.0.1:8000/detect/", requestOptions)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(result => {
+let modalContent = `
+    <style>
+        body {
+            background-color: black;
+            color: white;  /* Sets the text color to white */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+
+        #content {
+            display: flex;
+            align-items: center;
+        }
+
+        h1 {
+            flex-basis: 50%;
+        }
+
+        img {
+            margin-right: 20px;
+        }
+
+        p {
+            flex-basis: 50%;
+        }
+    </style>
+
+    <div id="content">
+        <img src="Komiljon_photo.jpg" alt="Komiljon Xamidjonov" width="400"/>
+        <h1>Speaker: ${result.speaker}</h1>
+    </div>
+`;
+
+                let width = 800;
+                let height = 400;
+                let left = (window.screen.width - width) / 2;
+                let top = (window.screen.height - height) / 2;
+
+                let modalWindow = window.open("", "modal", `width=${width},height=${height},left=${left},top=${top}`);
+                // modalWindow.document.write(modalContent);
+                modalWindow.document.write("<html><head><title>Modal</title></head><body>" + modalContent + "</body></html>");
+
+
+            })
+            .catch(error => {
+                console.log('Fetch error: ', error);
+            });
+    });
+
+</script>
 </body>
 </html>

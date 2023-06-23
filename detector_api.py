@@ -37,6 +37,7 @@ def identify_speaker(model, audio_file, dataset):
 
 # Test the speaker identification function with a new audio file
 # test_audio_file = 'test_data/Sardor_domla_test_audio.wav'
+# model_path = 'speaker_identification_model.pth'
 model_path = 'speaker_identification_model.pth'
 num_classes = len(dataset.speakers)
 model = CustomResNet34(num_classes=num_classes).to(device)
