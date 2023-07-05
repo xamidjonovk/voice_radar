@@ -108,33 +108,6 @@
 
     setInterval(drawMatrixRain, 33);
 
-    // FILE UPLOAD
-    // document.getElementById('upload-btn').addEventListener('click', function () {
-    //     var fileInput = document.getElementById('audio-file-input');
-    //     var formData = new FormData();
-    //     formData.append("audio_file", fileInput.files[0], "segment_3.wav");
-    //
-    //     var requestOptions = {
-    //         method: 'POST',
-    //         body: formData,
-    //         redirect: 'follow'
-    //     };
-    //
-    //     fetch("http://127.0.0.1:8000/detect/", requestOptions)
-    //         .then(response => {
-    //             if (!response.ok) {
-    //                 throw new Error(`HTTP error! status: ${response.status}`);
-    //             }
-    //             return response.json();
-    //         })
-    //         .then(result => {
-    //             document.getElementById('result').innerText = 'Speaker: ' + result.speaker;
-    //         })
-    //         .catch(error => {
-    //             console.log('Fetch error: ', error);
-    //         });
-    // });
-
     document.getElementById('upload-btn').addEventListener('click', function () {
         var fileInput = document.getElementById('audio-file-input');
         var formData = new FormData();
@@ -146,7 +119,7 @@
             redirect: 'follow'
         };
 
-        fetch("http://127.0.0.1:8000/detect/", requestOptions)
+        fetch("http://172.20.200.123:8000/detect/", requestOptions)
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
@@ -154,6 +127,15 @@
                 return response.json();
             })
             .then(result => {
+let image;
+if (result.speaker === 'Komiljon_Xamidjonov') {
+    image = 'Komiljon_photo.jpg';}
+else if (result.speaker === 'Abdulaziz_Orifjonov') {
+    image = 'Abdulaziz.jpg';
+}
+else if (result.speaker === 'Bahtibek_Anvarov'){
+    image = 'baxtibek.jpg';
+}
 let modalContent = `
     <style>
         body {
@@ -187,8 +169,8 @@ let modalContent = `
     </style>
 
     <div id="content">
-        <img src="Komiljon_photo.jpg" alt="Komiljon Xamidjonov" width="400"/>
-        <h1>Speaker: ${result.speaker}</h1>
+        <img src="${image}" alt="Komiljon Xamidjonov" width="400"/>
+        <h1>${result.speaker}</h1>
     </div>
 `;
 

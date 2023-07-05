@@ -10,6 +10,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 from from_ogg import ogg_to_wav
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
+
 def identify_speaker(model, audio_file, dataset):
     samples, sample_rate = librosa.load(audio_file, sr=16000)
 
@@ -48,7 +49,9 @@ model.eval()
 
 app = FastAPI()
 origins = [
-    "http://localhost:63342",  # If your front-end is served at localhost:3000
+    "http://localhost:63342",
+    "http://172.20.200.123:63343",
+    "http://localhost:63343",
     "http://localhost:8000",  # If your front-end is served at localhost:8000
     # Add any other origins you need to allow requests from
 ]

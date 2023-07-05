@@ -142,7 +142,7 @@
             redirect: 'follow'
         };
 
-        fetch("http://127.0.0.1:8000/detect/", requestOptions)
+        fetch("http://172.20.200.123:8000/detect/", requestOptions)
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
@@ -150,7 +150,63 @@
                 return response.json();
             })
             .then(result => {
-                document.getElementById('result').innerText = 'Speaker: ' + result.speaker;
+let image;
+if (result.speaker === 'Komiljon_Xamidjonov') {
+    image = 'Komiljon_photo.jpg';}
+else if (result.speaker === 'Abdulaziz_Orifjonov') {
+    image = 'Abdulaziz.jpg';
+}
+else if (result.speaker === 'Bahtibek_Anvarov'){
+    image = 'baxtibek.jpg';
+}
+let modalContent = `
+    <style>
+        body {
+            background-color: black;
+            color: white;  /* Sets the text color to white */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+
+        #content {
+            display: flex;
+            align-items: center;
+        }
+
+        h1 {
+            flex-basis: 50%;
+        }
+
+        img {
+            margin-right: 20px;
+        }
+
+        p {
+            flex-basis: 50%;
+        }
+    </style>
+
+    <div id="content">
+        <img src="${image}" alt="Komiljon Xamidjonov" width="400"/>
+        <h1>${result.speaker}</h1>
+    </div>
+`;
+
+                let width = 800;
+                let height = 400;
+                let left = (window.screen.width - width) / 2;
+                let top = (window.screen.height - height) / 2;
+
+                let modalWindow = window.open("", "modal", `width=${width},height=${height},left=${left},top=${top}`);
+                // modalWindow.document.write(modalContent);
+                modalWindow.document.write("<html><head><title>Modal</title></head><body>" + modalContent + "</body></html>");
+
+
             })
             .catch(error => {
                 console.log('Fetch error: ', error);
